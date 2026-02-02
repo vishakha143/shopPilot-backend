@@ -23,12 +23,10 @@ app.use(cors({
         "http://localhost:5174",
         "https://shoppilot-admin.vercel.app"
     ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
 }));
 
-app.options("*", cors());
+
 
 
 app.get("/", (req, res) => {
