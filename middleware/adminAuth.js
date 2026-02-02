@@ -5,7 +5,7 @@ const adminAuth = async (req,res,next) => {
         let {token} = req.cookies
 
     if(!token) {
-        return res.status(400).json({message:"Not Authorized Login Again"})
+        return res.status(401).json({message:"Not Authorized Login Again"})
     }
     
     let verifyToken =  jwt.verify(token,process.env.JWT_SECRET)
