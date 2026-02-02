@@ -1,7 +1,7 @@
 # ShopPilot Backend
 
 Backend API for **ShopPilot**, an AI-powered e-commerce platform.
-Handles authentication, products, orders, users, cart, and AI-related operations.
+Handles authentication, admin authorization, products, orders, users, and cart operations.
 
 ## 🛠 Tech Stack
 - Node.js
@@ -9,10 +9,15 @@ Handles authentication, products, orders, users, cart, and AI-related operations
 - MongoDB (Mongoose)
 - JWT Authentication
 - Cloudinary
-- OpenAI API
 
-## 🚀 Live API
-Will be updated after deployment
+## 🚀 Live Backend
+https://shoppilot-backend-i22e.onrender.com
+
+### Core Features
+- JWT-based authentication
+- Admin authentication via environment variables
+- Secure cross-site cookies (SameSite=None, HTTPS)
+- MongoDB Atlas integration
 
 ## ⚙️ Environment Variables
 Create a `.env` file using `.env.example`:
@@ -21,7 +26,8 @@ Create a `.env` file using `.env.example`:
 PORT=
 MONGO_URI=
 JWT_SECRET=
-OPENAI_API_KEY=
+ADMIN_EMAIL=
+ADMIN_PASSWORD=
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
