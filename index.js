@@ -15,18 +15,43 @@ dotenv.config();
 let app = express()
 let port = process.env.PORT || 6000
 
-app.use(express.json())
-app.use(cookieParser())
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://shop-pilot-admin.vercel.app"
+];
+
 app.use(cors({
-    origin: [
-        "http://localhost:5173",
-        "https://shoppilot-admin.vercel.app"
-    ],
-    credentials: true
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+app.options("*", cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
 }));
 
 
-
+app.use(express.json())
+app.use(cookieParser())
 
 app.get("/", (req, res) => {
   res.send("ShopPilot Backend is running");
@@ -37,9 +62,6 @@ app.use("/api/user", userRoutes)
 app.use("/api/product", productRoutes)
 app.use("/api/cart", cartRoutes)
 app.use("/api/order", orderRoutes)
-
-
-
 
 connectDb();
 
