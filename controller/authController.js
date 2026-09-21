@@ -3,6 +3,13 @@ import validator from "validator"
 import bcrypt from "bcryptjs"
 import { genToken, genToken1 } from "../config/token.js";
 
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
 
 export const registration = async (req,res) => {
   try {
@@ -21,13 +28,9 @@ export const registration = async (req,res) => {
 
     const user = await User.create({name,email,password:hashPassword})
     let token = await genToken(user._id)
-    res.cookie("token",token,{
-        httpOnly:true,
-        secure:true,
-        sameSite: "None",
-        maxAge: 7 * 24 * 60 * 60 * 1000
-    })
-    return res.status(201).json(user)
+    res.cookie("token",token,cookieOptions)
+    const { password: _password, ...safeUser } = user.toObject()
+    return res.status(201).json(safeUser)
   } catch (error) {
     console.log("registration error")
     return res.status(500).json({message:`registration error ${error}`})
@@ -48,13 +51,9 @@ export const login = async (req,res) => {
             return res.status(400).json({message:"Incorrect password"})
         }
         let token = await genToken(user._id)
-        res.cookie("token",token,{
-        httpOnly:true,
-        secure:true,
-        sameSite: "None",
-        maxAge: 7 * 24 * 60 * 60 * 1000
-    })
-    return res.status(201).json(user)
+        res.cookie("token",token,cookieOptions)
+    const { password: _password, ...safeUser } = user.toObject()
+    return res.status(201).json(safeUser)
 
     } catch (error) {
          console.log("login error")
@@ -65,7 +64,7 @@ export const login = async (req,res) => {
 }
 export const logOut = async (req,res) => {
 try {
-    res.clearCookie("token")
+    res.clearCookie("token", cookieOptions)
     return res.status(200).json({message:"logOut successful"})
 } catch (error) {
     console.log("logOut error")
@@ -77,8 +76,28 @@ try {
 
 export const googleLogin = async (req,res) => {
     try {
-        let {name , email} = req.body;
-         let user = await User.findOne({email}) 
+        const { idToken } = req.body;
+        if (!idToken || !process.env.FIREBASE_API_KEY) {
+          return res.status(400).json({ message: "Firebase sign-in token is required" });
+        }
+
+        const verification = await fetch(
+          `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${process.env.FIREBASE_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken }),
+          },
+        );
+        const verificationData = await verification.json();
+        const firebaseUser = verificationData.users?.[0];
+        if (!verification.ok || !firebaseUser?.email || !firebaseUser.emailVerified) {
+          return res.status(401).json({ message: "Invalid Firebase sign-in token" });
+        }
+
+        const email = firebaseUser.email.toLowerCase();
+        const name = firebaseUser.displayName || email.split("@")[0];
+        let user = await User.findOne({email})
         if(!user){
           user = await User.create({
             name,email
@@ -86,13 +105,9 @@ export const googleLogin = async (req,res) => {
         }
        
         let token = await genToken(user._id)
-        res.cookie("token",token,{
-        httpOnly:true,
-        secure:true,
-        sameSite: "None",
-        maxAge: 7 * 24 * 60 * 60 * 1000
-    })
-    return res.status(200).json(user)
+        res.cookie("token",token,cookieOptions)
+    const { password: _password, ...safeUser } = user.toObject()
+    return res.status(200).json(safeUser)
 
     } catch (error) {
          console.log("googleLogin error")
@@ -115,12 +130,7 @@ export const adminLogin = async (req, res) => {
     if (reqEmail === envEmail && reqPassword === envPassword) {
       const token = await genToken1(reqEmail);
 
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "None",
-        maxAge: 24 * 60 * 60 * 1000
-      });
+      res.cookie("token", token, { ...cookieOptions, maxAge: 24 * 60 * 60 * 1000 });
 
       return res.status(200).json({ message: "Admin login successful" });
     }
@@ -131,4 +141,5 @@ export const adminLogin = async (req, res) => {
     return res.status(500).json({ message: "Admin login error" });
   }
 };
+
 
