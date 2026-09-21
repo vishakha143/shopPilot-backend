@@ -16,10 +16,11 @@ let app = express()
 let port = process.env.PORT || 6000
 
 
-const allowedOrigins = [
-  "https://shop-pilot-frontend.vercel.app",
-  "https://shop-pilot-admin.vercel.app"
-];
+const allowedOrigins = [process.env.FRONTEND_URL, process.env.ADMIN_URL].filter(Boolean);
+
+if (process.env.NODE_ENV !== "production") {
+  allowedOrigins.push("http://localhost:5173", "http://localhost:5174");
+}
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -54,5 +55,6 @@ connectDb();
 app.listen(port, () => {
   console.log("Hello From Server");
 });
+
 
 

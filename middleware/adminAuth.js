@@ -10,10 +10,11 @@ const adminAuth = async (req,res,next) => {
     
     let verifyToken =  jwt.verify(token,process.env.JWT_SECRET)
 
-    if(!verifyToken){
-         return res.status(400).json({message:"Not Authorized Login Again, Invalid token"})
+    const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase()
+    if (!verifyToken || verifyToken.role !== "admin" || verifyToken.email?.toLowerCase() !== adminEmail) {
+         return res.status(403).json({message:"Admin access is required"})
     }
-    req.adminEmail = process.env.ADMIN_EMAIL
+    req.adminEmail = adminEmail
 
     next()
         
@@ -26,3 +27,4 @@ const adminAuth = async (req,res,next) => {
 }
 
 export default adminAuth
+
